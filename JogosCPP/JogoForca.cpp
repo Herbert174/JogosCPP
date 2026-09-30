@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cctype>
+#include <fstream>
 #include <stdlib.h>
 #include <time.h>
 
@@ -47,9 +48,10 @@ void arriscarPalavra(string palavraSecreta, string& palavraComMascara) {
 		palavraComMascara = palavraSecreta;
 }
 
-void resetaJogo(string& palavraComMascara, int& tentativasRestante) {
+void resetaJogo(string& palavraComMascara, int& tentativasRestante, string& letrasArriscadas) {
 	tentativasRestante = 5;
 	size_t tamPalavra = palavraComMascara.size();
+	letrasArriscadas = "";
 	palavraComMascara = "";
 	mascararPalavraSecreta(palavraComMascara, tamPalavra);
 }
@@ -74,6 +76,37 @@ void lerLetra(char& letra) {
 	}
 }
 
+void adicionarPalavra() {
+	ofstream arquivo("palavras.txt", ios::app);
+	string palavra;
+	cin >> palavra;
+
+	if (arquivo.is_open()) {
+		arquivo << palavra << "\n";
+		arquivo.close();
+		cout << "Palavra adicionada com sucesso! " << endl;
+	}
+}
+
+vector<string> recuperandoPalavras() {
+	ifstream arquivo("palavras.txt");
+
+	if (!arquivo.is_open()) {
+		cout << "Erro ao abrir o arquivo." << endl;
+		exit(1);
+	}
+
+	vector<string> palavras;
+	string linha;
+	while (getline(arquivo, linha)) {
+		palavras.push_back(linha);
+	}
+
+	arquivo.close();
+
+	return palavras;
+}
+
 void interfaceInicial() {
 	cout << "Bem vindo ao Jogo da Forca\n" << endl;
 	cout << "1 - Jogar" << endl;
@@ -83,7 +116,7 @@ void interfaceInicial() {
 }
 
 string retornaPalavraAleatoria() {
-	vector<string> palavras = { "abacaxi", "manga", "morango", "limao" };
+	vector<string> palavras = recuperandoPalavras();
 	size_t qntdPalavra = palavras.size();
 
 	srand((unsigned)time(NULL));
@@ -103,21 +136,32 @@ bool PossuiTentativasRestantes(int tentativasRestante) {
 	}
 }
 
-void verificaLetrasChutadas(string palavraSecreta, string& palavraComMascara, char letra, int& tentativasRestante) {
+void verificaLetrasChutadas(string palavraSecreta, string& palavraComMascara, char letra, int& tentativasRestante, string& letrasArriscadas) {
 	bool achou = false;
+	bool letraJaChutada = false;
 	for (int i = 0; i < palavraSecreta.size(); i++) {
 		if (palavraSecreta[i] == letra) {
 			palavraComMascara[i] = palavraSecreta[i];
 			achou = true;
 		}
 	}
-	if (!achou)
-		tentativasRestante--;
+	if (!achou){  //Se a letra não está na palavra secreta
+		for (int i = 0; i < letrasArriscadas.size(); i++) {
+			if (letra == letrasArriscadas[i]) //Verifica se ela já não foi chutada antes
+				letraJaChutada = true;
+		}
+		if (!letraJaChutada) { //Se caso não foi, adiciona em letras arriscadas e diminui as tentativas restantes
+			letrasArriscadas += letra;
+			letrasArriscadas += ' ';
+			tentativasRestante--;
+		}
+	}
 }
 
-void interfaceLoopJogoSolo(string palavraSecreta, string& palavraComMascara, int& tentativasRestante, char& letra) {
+void interfaceLoopJogoSolo(string palavraSecreta, string& palavraComMascara, int& tentativasRestante, char& letra, string& letrasArriscadas) {
 	imprimirMascaraPalavraSecreta(palavraComMascara);
 	cout << "Tentativas restantes : " << tentativasRestante << endl;
+	cout << "Letras arriscadas : " << letrasArriscadas << endl;
 	cout << "(1) para arriscar uma palavra inteira " << endl;
 	cout << "(3) para reiniciar o jogo " << endl;
 	cout << "Digite uma letra : ";
@@ -126,16 +170,18 @@ void interfaceLoopJogoSolo(string palavraSecreta, string& palavraComMascara, int
 		arriscarPalavra(palavraSecreta, palavraComMascara);
 	}
 	if (letra == '3') {
-		resetaJogo(palavraComMascara, tentativasRestante);
+		resetaJogo(palavraComMascara, tentativasRestante, letrasArriscadas);
+		letra = 0;
+		tentativasRestante++;
 	}
-	verificaLetrasChutadas(palavraSecreta, palavraComMascara, letra, tentativasRestante);
+	verificaLetrasChutadas(palavraSecreta, palavraComMascara, letra, tentativasRestante, letrasArriscadas);
 	limpaTela();
 }
 
 void jogarSolo() {
 	
 	string palavraSecreta = retornaPalavraAleatoria();
-	string palavraComMascara;
+	string palavraComMascara, letrasArriscadas = "";
 	size_t tamanhoPalavraSecreta = palavraSecreta.size();
 	int maxTentativas = 5, tentativasRestante = maxTentativas;
 	char letra;
@@ -144,7 +190,7 @@ void jogarSolo() {
 
 	while (PossuiTentativasRestantes(tentativasRestante) && !acertouTudo(palavraComMascara)) { //Enquanto possuir tentativas e não tiver acertado tudo, continua
 		cout << "--- Jogo da forca ---" << endl;
-		interfaceLoopJogoSolo(palavraSecreta, palavraComMascara, tentativasRestante, letra); //Exibe interface do game, com as letras e opção de chute do jogador
+		interfaceLoopJogoSolo(palavraSecreta, palavraComMascara, tentativasRestante, letra, letrasArriscadas); //Exibe interface do game, com as letras e opção de chute do jogador
 	}
 	cout << "A palavra secreta era : " << palavraSecreta << endl;
 	cout << "Final do jogo!" << endl;
@@ -170,6 +216,13 @@ bool acertouTudo(string palavraComMascara) {
 		}
 	}
 	cout << "Parabens você acertou!" << endl;
+	cout << "Você deseja adicionar uma nova fruta?" << endl;
+	cout << "(1) para adicionar" << endl;
+	char opcao = 0;
+	cin >> opcao;
+	if (opcao == '1') {
+		adicionarPalavra();
+	}
 	return true;
 }
 
@@ -187,7 +240,17 @@ void menuInicial(){
 			jogarSolo();
 			break;
 		case 2:
-			cout << "Sobre o jogo" << endl;
+			cout << "-------- Sobre o jogo --------" << endl;
+			cout << "Jogo da forca desenvolvido por" << endl;
+			cout << "------- Herbert Santos -------" << endl;
+			cout << "--------- 1 - Voltar ---------" << endl;
+			cout << "---------- 2 - Sair ----------" << endl;
+			cin >> opcao;
+			if (opcao == 1) {
+				limpaTela();
+				menuInicial();
+			}
+			limpaTela();
 			break;
 		case 3:
 			cout << "Sair do jogo" << endl;

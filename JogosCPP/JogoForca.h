@@ -20,4 +20,5 @@ bool acertouTudo(string palavraComMascara);
 bool PossuiTentativasRestantes(int tentativasRestante);
 void interfaceLoopJogoSolo(string palavraSecreta, string& palavraComMascara, int& tentativasRestante, char& letra);
 void verificaLetrasChutadas(string palavraSecreta, string& palavraComMascara, char letra);
-void resetaJogo(string& palavraComMascara, int& tentativasRestante);
+void resetaJogo(string& palavraComMascara, int& tentativasRestante, string& letrasArriscadas);
+void adicionarPalavra();
