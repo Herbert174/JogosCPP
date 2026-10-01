@@ -139,11 +139,14 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BatalhaNaval.cpp" />
     <ClCompile Include="JogoForca.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BatalhaNaval.h" />
     <ClInclude Include="JogoForca.h" />
+    <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="palavras.txt" />
